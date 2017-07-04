@@ -1988,6 +1988,7 @@ define('modules/menu',['underscore', 'text!templates/menu.html'],
             init: function () {
                 this.template = _.template(menuTpl);
                 this.el = document.querySelector('.menu');
+                this.currentState = false;
 
                 this.render();
                 this.setupEvents();
@@ -1999,11 +2000,120 @@ define('modules/menu',['underscore', 'text!templates/menu.html'],
 
 
             setupEvents: function () {
-               
+               $('.nav-toggle').on('click', this.hambClickHandler.bind(this));
+            },
+
+            hambClickHandler: function () {
+                this.currentState  = !this.currentState;
+                $('.nav-toggle').toggleClass('is-active', this.currentState);
+                $('.nav-menu').toggleClass('is-active', this.currentState);
             }
         };
     });
 
+define('modules/router',[], function () {
+
+    var Router = function (options) {
+        this.routes = options.routes || [];
+        this.currentRoute = {};
+        this.init();
+    };
+
+    Router.prototype = {
+        init: function () {
+            window.addEventListener('hashchange', function () {
+                    this.handleUrl(window.location.hash);
+                }.bind(this)
+            );
+            this.handleUrl(window.location.hash);
+        },
+
+        findPreviousRoute: function () {
+            return this.currentRoute;
+        },
+
+        findNewActiveRoute: function (url) {
+            return this.routes.find(function (routeItem) {
+                return url === routeItem.match;
+            });
+        },
+
+        handleUrl: function (activeUrl) {
+            var url = activeUrl.slice(1);
+            var previousRoute = this.findPreviousRoute();
+            var newRoute = this.findNewActiveRoute(url);
+
+            Promise.resolve()
+                .then(function () {
+                    previousRoute && previousRoute.onLeave && previousRoute.onLeave()
+                })
+                .then(function () {
+                    newRoute && newRoute.onBeforeEnter && newRoute.onBeforeEnter()
+                })
+                .then(function () {
+                    newRoute && newRoute.onEnter && newRoute.onEnter()
+                })
+                .then(function () {
+                    this.currentRoute = newRoute || {};
+                    console.log('%c route is changed: current route - ' + (this.currentRoute.match || '#'), 'background: #222; color: #bada55');
+                }.bind(this));
+        }
+    };
+var router = new Router({
+        routes: [
+            {
+                match: '',
+                onBeforeEnter: function () {
+                    console.log('onBeforeEnter index')
+                },
+                onEnter: function () {
+                    console.log('onEnter index')
+                },
+                onLeave: function () {
+                    console.log('onLeave index')
+                }
+            },
+            {
+                match: 'task-1',
+                onBeforeEnter: function () {
+                    console.log('onBeforeEnter task-1')
+                },
+                onEnter: function () {
+                    console.log('onEnter task-1')
+                },
+                onLeave: function () {
+                    console.log('onLeave task-1')
+                }
+            },
+            {
+                match: 'task-2',
+                onBeforeEnter: function () {
+                    console.log('onBeforeEnter task-2')
+                },
+                onEnter: function () {
+                    console.log('onEnter task-2');
+                },
+                onLeave: function () {
+                    console.log('onLeave task-2');
+                }
+            },
+            {
+                match: 'task-3',
+                onBeforeEnter: function () {
+                    console.log('onBeforeEnter task-3')
+                },
+                onEnter: function () {
+                    console.log('onEnter task-3');
+                },
+                onLeave: function () {
+                    console.log('onLeave task-3');
+                }
+            }
+        ]
+    });
+return router;
+
+});
 define('util',[],function () {
     return {
         generateId: function () {
@@ -2105,12 +2215,14 @@ define('modules/task1',['util', 'jquery', 'jqueryui'], function (util, $, $ui) {
     }
 
 });
-define('app',['radio', 'modules/menu', 'modules/task1'],
-    function (radio, menu, task1) {
+define('app',['radio', 'modules/menu', 'modules/router', 'modules/task1'],
+    function (radio, menu, router, task1) {
         return {
             init: function () {
                 menu.init();
                 task1.init();
+
+                router.init();
             }
         };
     });
