@@ -13,6 +13,13 @@ define(function () {
                 color += letters[Math.floor(Math.random() * 16)];
             }
             return color;
+        },
+
+        randomInteger: function(min, max) {
+            var rand = min - 0.5 + Math.random() * (max - min + 1);
+            rand = Math.round(rand);
+
+            return rand;
         }
     };
 });
